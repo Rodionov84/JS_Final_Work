@@ -119,8 +119,12 @@ class Level
       for(let x = 0; x < actor.size.x; x++)
       {
         // !!!!!!!!!!!!!!!!! какой объект возвращать? !!!!!!!!!!!!!!!!!
-        let y_ = Math.ceil(actor.pos.y + y);
-        let x_ = Math.ceil(actor.pos.x + x);
+        let y_ = Math.floor(actor.pos.y + y);
+        let x_ = Math.floor(actor.pos.x + x);
+        if(y_< 0) y_ = 0;
+        if(x_ < 0) x_ = 0;
+        if(y_> this.grid.height) y_ = this.grid.height;
+        if(x_ > this.grid.width) x_ = this.grid.width;
         if( this.grid[y_][x_] != undefined )
           return new Actor();
       }
@@ -137,8 +141,13 @@ class Level
     {
       for(let x = 0; x < size.x; x++)
       {
-        let y_ = Math.ceil(pos.y + y);
-        let x_ = Math.ceil(pos.x + x);
+        let y_ = Math.floor(pos.y + y);
+        let x_ = Math.floor(pos.x + x);
+        if(y_< 0) y_ = 0;
+        if(x_ < 0) x_ = 0;
+        if(y_> this.grid.height) y_ = this.grid.height;
+        if(x_ > this.grid.width) x_ = this.grid.width;
+        console.log([x_, y_ ]);
         if( this.grid[y_][x_] != undefined )
           return this.grid[y_][x_];
       }
@@ -267,16 +276,19 @@ class LevelParser
   {
     let actors = new Array();
     let self = this;
+    console.log("createActors-start");
     grid.forEach(function(row, rowI){
       for( let i = 0; i < row.length; i++ )
       {
         let actor = self.actorFromSymbol(row[i]);
-        if( actor != undefined && new actor() instanceof Actor )
+        if( actor != undefined && new actor(new Vector(0,0)) instanceof Actor )
         {
-          actors.push(new actor(new Vector(i, rowI)));
+          let act = new actor(new Vector(i, rowI));
+          actors.push(act);
         }
       }
     });
+    console.log("createActors-end");
     return actors;
   }
 
@@ -301,19 +313,156 @@ class Player extends Actor
   }
 }
 
-const schema = [
-  '         ',
-  '         ',
-  '         ',
-  '         ',
-  '     !xxx',
-  ' @       ',
-  'xxx!     ',
-  '         '
+class Fireball extends Actor
+{
+  constructor(position = new Vector(0,0), speed = new Vector(0,0))
+  {
+    super(position, new Vector(1,1), speed);
+  }
+
+  get type()
+  {
+    return "fireball";
+  }
+
+  getNextPosition(time = 1)
+  {
+    return new Vector( this.pos.x + this.speed.x * time, this.pos.y + this.speed.y * time );
+  }
+
+  handleObstacle()
+  {
+    this.speed = new Vector( 0 - this.speed.x, 0 - this.speed.y );
+  }
+
+  act(time, level)
+  {
+    let pos = this.getNextPosition(time);
+
+    if( level.obstacleAt(pos, this.size) == undefined )
+    {
+      this.pos = pos;
+    }
+    else
+    {
+      this.handleObstacle();
+    }
+  }
+}
+
+class HorizontalFireball extends Fireball
+{
+  constructor(pos)
+  {
+    super(pos, new Vector(2, 0));
+  }
+}
+
+class VerticalFireball extends Fireball
+{
+  constructor(pos)
+  {
+    super(pos, new Vector(0, 2));
+  }
+}
+
+class FireRain extends VerticalFireball
+{
+  constructor(pos)
+  {
+    super(pos);
+
+    this.speed.y = 3;
+    this.startPos = pos;
+  }
+
+  handleObstacle()
+  {
+    this.pos = this.startPos;
+  }
+}
+
+class Coin extends Actor
+{
+  constructor(pos)
+  {
+    console.log("==========================");
+    console.log(pos);
+    console.log("==========================");
+    let newPos = pos.plus( new Vector(-0.2, -0.1) );
+    super(newPos, new Vector(0.6, 0.6));
+
+    this.startPos = newPos;
+    this.springSpeed = 8;
+    this.springDist = 0.07;
+    this.spring = Math.random() * ( 2 * Math.PI );
+  }
+
+  get type()
+  {
+    return "coin";
+  }
+
+  updateSpring(time = 1)
+  {
+    this.spring += this.springSpeed * time;
+  }
+
+  getSpringVector()
+  {
+    return new Vector(0, Math.sin( this.spring * ( this.size.y / 2 ) ));
+  }
+
+  getNextPosition(time = 1)
+  {
+    this.updateSpring(time);
+    return this.startPos.plus(this.getSpringVector());
+  }
+
+  act(time)
+  {
+    this.pos = this.getNextPosition(time);
+  }
+}
+
+// loadLevels делает загрузку с файла с некорректными заголовками
+// Failed to load https://neto-api.herokuapp.com/js/diplom/levels.json: No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'http://js-final.net' is therefore not allowed access.
+let promise = loadLevels();
+promise.then(function(json){
+  let levels = JSON.parse(json);
+  console.log(levels);
+}, function(){
+  alert("Ошибка загрузки уровней!");
+});
+
+const schemas = [
+  [
+    '         ',
+    '         ',
+    '    =    ',
+    '       o ',
+    '     !xxx',
+    ' @       ',
+    'xxx!     ',
+    '         '
+  ],
+  [
+    '      v  ',
+    '    v    ',
+    '  v      ',
+    '        o',
+    '        x',
+    '@   x    ',
+    'x        ',
+    '         '
+  ]
 ];
 const actorDict = {
-  '@': Player
+  '@': Player,
+  'v': FireRain,
+  '=': HorizontalFireball,
+  'o': Coin
 }
 const parser = new LevelParser(actorDict);
-const level = parser.parse(schema);
-runLevel(level, DOMDisplay);
+runGame(schemas, parser, DOMDisplay)
+  .then(() => console.log('Вы выиграли приз!'));
