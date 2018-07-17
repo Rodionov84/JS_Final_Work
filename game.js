@@ -157,23 +157,23 @@ class Level
 
         if( y_ >= 0 && x_ >= 0 && y_ < this.height && x_ < this.width )
         {
-          let block_left = undefined;
-          let block_right = undefined;
+          let blockLeft = undefined;
+          let blockRight = undefined;
           if( this.grid[y_][x_] != undefined )
           {
-            block_left = this.grid[y_][x_];
+            blockLeft = this.grid[y_][x_];
           }
           x_ = Math.ceil(pos.x + x - 1 + size.x);
           if( x_ < this.width && this.grid[y_][x_] != undefined )
           {
-            block_right = this.grid[y_][x_];
+            blockRight = this.grid[y_][x_];
           }
 
-          if( block_left == 'lava' || block_right == 'lava' )
+          if( blockLeft == 'lava' || blockRight == 'lava' )
           {
             return 'lava';
           }
-          if( block_right == 'wall' || block_left == 'wall' )
+          if( blockRight == 'wall' || blockLeft == 'wall' )
           {
             return 'wall';
           }
