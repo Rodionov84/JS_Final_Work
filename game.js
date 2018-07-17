@@ -9,7 +9,10 @@ class Vector
 
   plus(vector)
   {
-    // check type
+    if( !( vector instanceof Vector ) )
+    {
+      throw "Можно прибавлять к вектору только вектор типа Vector";
+    }
 
     return new Vector(this.x + vector.x, this.y + vector.y);
   }
@@ -24,7 +27,10 @@ class Actor
 {
   constructor(position = new Vector(0,0), size = new Vector(1,1), speed = new Vector(0,0))
   {
-    // check type
+    if( !( position instanceof Vector ) || !( size instanceof Vector ) || !( speed instanceof Vector ) )
+    {
+      throw "Некорректные аргументы.";
+    }
 
     this.pos = position;
     this.size = size;
@@ -33,19 +39,19 @@ class Actor
 
   get left()
   {
-    return this.pos.x;
+    return Math.round(this.pos.x);
   }
   get top()
   {
-    return this.pos.y;
+    return Math.round(this.pos.y);
   }
   get right()
   {
-    return this.pos.x + this.size.x;
+    return Math.round(this.pos.x) + this.size.x;
   }
   get bottom()
   {
-    return this.pos.y + this.size.y;
+    return Math.round(this.pos.y) + this.size.y;
   }
 
   get type()
@@ -60,7 +66,10 @@ class Actor
 
   isIntersect(actor)
   {
-    // check type
+    if( ! ( actor instanceof Actor ) )
+    {
+      throw "Некорректные аргументы.";
+    }
 
     if( this === actor )
     {
@@ -70,9 +79,9 @@ class Actor
     let XColl=false;
     let YColl=false;
 
-    if ((this.right >= actor.left) && (this.left <= actor.right)) 
+    if ((this.right > actor.left) && (this.left < actor.right)) 
       XColl = true;
-    if ((this.bottom >= actor.top) && (this.top <= actor.bottom)) YColl = true;
+    if ((this.bottom > actor.top) && (this.top < actor.bottom)) YColl = true;
 
     if (XColl&YColl)
     {
@@ -112,21 +121,16 @@ class Level
 
   actorAt(actor)
   {
-    // check type
-
-    for(let y = 0; y < actor.size.y; y++)
+    if( ! ( actor instanceof Actor ) )
     {
-      for(let x = 0; x < actor.size.x; x++)
+      throw "Некорректные аргументы.";
+    }
+
+    for( let actor_ of this.actors )
+    {
+      if( actor_ != undefined && actor_.isIntersect(actor) )
       {
-        // !!!!!!!!!!!!!!!!! какой объект возвращать? !!!!!!!!!!!!!!!!!
-        let y_ = Math.floor(actor.pos.y + y);
-        let x_ = Math.floor(actor.pos.x + x);
-        if(y_< 0) y_ = 0;
-        if(x_ < 0) x_ = 0;
-        if(y_> this.grid.height) y_ = this.grid.height;
-        if(x_ > this.grid.width) x_ = this.grid.width;
-        if( this.grid[y_][x_] != undefined )
-          return new Actor();
+        return actor_;
       }
     }
 
@@ -135,7 +139,10 @@ class Level
 
   obstacleAt(pos, size)
   {
-    // check type
+    if( ! ( pos instanceof Vector ) || ! ( size instanceof Vector ) )
+    {
+      throw "Некорректные аргументы.";
+    }
 
     for(let y = 0; y < size.y; y++)
     {
@@ -143,22 +150,43 @@ class Level
       {
         let y_ = Math.floor(pos.y + y);
         let x_ = Math.floor(pos.x + x);
-        if(y_< 0) y_ = 0;
-        if(x_ < 0) x_ = 0;
-        if(y_> this.grid.height) y_ = this.grid.height;
-        if(x_ > this.grid.width) x_ = this.grid.width;
-        console.log([x_, y_ ]);
-        if( this.grid[y_][x_] != undefined )
-          return this.grid[y_][x_];
+        if( x_ < 0 ) x_ = 0;
+        if( y_ < 0 ) y_ = 0;
+        if( x_ > this.width ) x_ = this.width;
+        if( y_ > this.width ) y_ = this.height;
+
+        if( y_ >= 0 && x_ >= 0 && y_ < this.height && x_ < this.width )
+        {
+          let block_left = undefined;
+          let block_right = undefined;
+          if( this.grid[y_][x_] != undefined )
+          {
+            block_left = this.grid[y_][x_];
+          }
+          x_ = Math.ceil(pos.x + x - 1 + size.x);
+          if( x_ < this.width && this.grid[y_][x_] != undefined )
+          {
+            block_right = this.grid[y_][x_];
+          }
+
+          if( block_left == 'lava' || block_right == 'lava' )
+          {
+            return 'lava';
+          }
+          if( block_right == 'wall' || block_left == 'wall' )
+          {
+            return 'wall';
+          }
+        }
       }
     }
 
     let actor = new Actor(pos, size);
-    if( actor.left < 0 || actor.top > this.height || actor.right > this.width )
+    if( actor.left < 0 || actor.top < 0 || actor.right > this.width )
     {
       return 'wall';
     }
-    else if( actor.bottom < 0 )
+    else if( actor.bottom > this.height )
     {
       return 'lava';
     }
@@ -168,39 +196,40 @@ class Level
 
   removeActor(actor)
   {
-    // check type
-
-    for(let y = 0; y < actor.size.y; y++)
+    if( ! ( actor instanceof Actor ) )
     {
-      for(let x = 0; x < actor.size.x; x++)
-      {
-        if( this.grid[actor.pos.y + y][actor.pos.x + x] != undefined && this.grid[actor.pos.y + y][actor.pos.x + x] == actor.type )
-        {
-          this.grid[actor.pos.y + y][actor.pos.x + x] = undefined;
-        }
-      }
+      throw "Некорректные аргументы.";
     }
+
+    console.log("removeActor(actor)")
+
+    let self = this;
+    this.actors.forEach(function(value, index){
+      if( value == actor )
+      {
+        delete self.actors[index];
+      }
+    });
   }
 
   noMoreActors(actorType)
   {
     let isNoMore = true;
 
-    this.grid.forEach(function(cols){
-      cols.forEach(function(actor){
-        if( actor == actorType )
-        {
-          isNoMore = false;
-        }
-      });
-    });
+    for(let actor_ of this.actors)
+    {
+      if( actor_ != undefined && actor_.type == actorType )
+      {
+        isNoMore = false;
+      } 
+    }
 
     return isNoMore;
   }
 
   playerTouched(actorType, actor)
   {
-    if( this.status == null )
+    if( this.status != null )
     {
       return;
     }
@@ -208,6 +237,7 @@ class Level
     if( actorType == 'lava' || actorType == 'fireball' )
     {
       this.status = 'lost';
+      console.log("USER LOST");
       return;
     }
 
@@ -337,6 +367,11 @@ class Fireball extends Actor
 
   act(time, level)
   {
+    if( ! ( level instanceof Level ) )
+    {
+      throw "Некорректные аргументы.";
+    }
+
     let pos = this.getNextPosition(time);
 
     if( level.obstacleAt(pos, this.size) == undefined )
@@ -427,6 +462,7 @@ class Coin extends Actor
 
 // loadLevels делает загрузку с файла с некорректными заголовками
 // Failed to load https://neto-api.herokuapp.com/js/diplom/levels.json: No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'http://js-final.net' is therefore not allowed access.
+
 let promise = loadLevels();
 promise.then(function(json){
   let levels = JSON.parse(json);
@@ -438,18 +474,18 @@ promise.then(function(json){
 const schemas = [
   [
     '         ',
+    '       xx',
     '         ',
-    '    =    ',
     '       o ',
     '     !xxx',
-    ' @       ',
+    ' @o      ',
     'xxx!     ',
     '         '
   ],
   [
-    '      v  ',
-    '    v    ',
-    '  v      ',
+    '  v   v  ',
+    '         ',
+    '         ',
     '        o',
     '        x',
     '@   x    ',

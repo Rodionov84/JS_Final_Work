@@ -5,7 +5,7 @@ function loadLevels() {
     const xhr = new XMLHttpRequest();
     let url = './levels.json';
     if (location.hostname !== 'localhost') {
-      url = 'http://university.netology.ru/user_data/irodionov/me/js-final/level.php';
+      url = 'http://university.netology.ru/user_data/irodionov/me/js-final/levels.php';
    }
     xhr.open('GET', url);
     xhr.addEventListener('error', e => fail(xhr));
