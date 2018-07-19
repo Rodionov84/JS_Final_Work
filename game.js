@@ -37,6 +37,8 @@ class Actor
     this.speed = speed;
   }
 
+  // следующие 4 свойства неправильные,
+  // в задании ничего не сказано про округление
   get left()
   {
     return Math.round(this.pos.x);
@@ -71,14 +73,20 @@ class Actor
       throw "Некорректные аргументы.";
     }
 
+    // странное форматирование,
+    // лучше использовать правли аоформления кода нетологии
+    // https://netology-university.bitbucket.io/codestyle/javascript/
     if( this === actor )
     {
       return false;
     }
 
+    // не совсем понятно, что делает код дальше
+    // его весь можно заменить на 1 if
     let XColl=false;
     let YColl=false;
 
+    // не опускайте фигурные скобки у if
     if ((this.right > actor.left) && (this.left < actor.right)) 
       XColl = true;
     if ((this.bottom > actor.top) && (this.top < actor.bottom)) YColl = true;
@@ -95,13 +103,17 @@ class Level
 {
   constructor(grid = [], actors = [])
   {
+    // тут можно создать копии массивов,
+    // чтобы поля объекта нельзя было изменить извне
     this.grid = grid;
     this.actors = actors;
 
+    // тут лучше задать значение этому полю
     this.player = undefined;
 
     this.height = this.grid.length;
     let width = 0;
+    // лучше использовать .reduce или Math.max + .map
     this.grid.forEach(function(cols){
       if( width < cols.length )
       {
@@ -126,8 +138,11 @@ class Level
       throw "Некорректные аргументы.";
     }
 
+    // у массива есть метод ля поиска объектов
     for( let actor_ of this.actors )
     {
+      // лучше не использовать имена переменных вроде actor_
+      // при чтении непонятно что в них храниться
       if( actor_ != undefined && actor_.isIntersect(actor) )
       {
         return actor_;
@@ -144,6 +159,11 @@ class Level
       throw "Некорректные аргументы.";
     }
 
+    // этот кусок нужно переписать
+    // алгоритм следующий:
+    // определить клетки, на которых находится объект
+    // проверить есть ли в них препятствие
+    // иногда помогает нарисовать поле и объект на листе бумаги
     for(let y = 0; y < size.y; y++)
     {
       for(let x = 0; x < size.x; x++)
@@ -181,16 +201,22 @@ class Level
       }
     }
 
+    // здесь можно не создавать объект,
+    // у вас он использует только для того, чтобы сложить несколько чисел
     let actor = new Actor(pos, size);
+    // этот код лучше перенести до цикла
     if( actor.left < 0 || actor.top < 0 || actor.right > this.width )
     {
       return 'wall';
     }
+    // в if return, поэтому else можно не писать
     else if( actor.bottom > this.height )
     {
       return 'lava';
     }
 
+    // лишняя строчка - функция и так возвращает undefined,
+    // если не указано другое
     return undefined;
   }
 
@@ -201,12 +227,18 @@ class Level
       throw "Некорректные аргументы.";
     }
 
+    // отладочный код
     console.log("removeActor(actor)")
 
+    // лучше использовать стрелочные функции
     let self = this;
     this.actors.forEach(function(value, index){
+      // не используйте оператор ==,
+      // это можно привести к неожиданному поведению при приведении типов
+      // (используйте ===)
       if( value == actor )
       {
+        // это некорретный способ удаления обхекта из массива
         delete self.actors[index];
       }
     });
@@ -216,6 +248,7 @@ class Level
   {
     let isNoMore = true;
 
+    // у массива есть метод для поиска объектав по условию
     for(let actor_ of this.actors)
     {
       if( actor_ != undefined && actor_.type == actorType )
@@ -234,19 +267,23 @@ class Level
       return;
     }
 
+    // ===
     if( actorType == 'lava' || actorType == 'fireball' )
     {
       this.status = 'lost';
+      // отладочный код
       console.log("USER LOST");
       return;
     }
 
+    // ===
     if( actorType == 'coin' && actor.type == 'coin' )
     {
       this.removeActor(actor);
       if( this.noMoreActors('coin') )
       {
         this.status = 'won';
+        // лишняя строчка
         return;
       }
     }
@@ -255,6 +292,8 @@ class Level
 
 class LevelParser
 {
+  // можно добавить значение по-умолчанию
+  // dictionary - более подходящее название
   constructor(wordbook)
   {
     this.wordbook = wordbook;
@@ -262,19 +301,24 @@ class LevelParser
 
   actorFromSymbol(sym)
   {
+    // цикл лишний
     for(let key in this.wordbook)
     {
+      // проверка лишняя
       if(key == sym)
       {
         return this.wordbook[key];
       }
     }
 
+    // лишняя строчка
     return undefined;
   }
 
   obstacleFromSymbol(sym)
   {
+    // можно убрать эту переменную,
+    // если сразу возвращать значение из case
     let res = undefined;
     switch(sym)
     {
@@ -290,8 +334,12 @@ class LevelParser
 
   createGrid(grid)
   {
+    // значение присваивается переменной один раз,
+    // поэтому лучше использвать const
+    // массивы лучше создавать через []
     let res = new Array();
     let self = this;
+    // лучше перемписать с использованием метода .map
     grid.forEach(function(row, rowI){
       res.push( new Array() );
       for( let i = 0; i < row.length; i++ )
@@ -304,20 +352,28 @@ class LevelParser
 
   createActors(grid)
   {
+    // []
     let actors = new Array();
+    // стрелочные функции
     let self = this;
+    // отладочный код
     console.log("createActors-start");
     grid.forEach(function(row, rowI){
       for( let i = 0; i < row.length; i++ )
       {
+        // const
         let actor = self.actorFromSymbol(row[i]);
+        // лушче проверить, что actor это функция
+        // может быть сразу создать нужный объект и проверить его тип?
         if( actor != undefined && new actor(new Vector(0,0)) instanceof Actor )
         {
+          // const
           let act = new actor(new Vector(i, rowI));
           actors.push(act);
         }
       }
     });
+    // отладочный код
     console.log("createActors-end");
     return actors;
   }
@@ -357,11 +413,13 @@ class Fireball extends Actor
 
   getNextPosition(time = 1)
   {
+    // тут лучше использовть мтеоды класса Vector
     return new Vector( this.pos.x + this.speed.x * time, this.pos.y + this.speed.y * time );
   }
 
   handleObstacle()
   {
+    // метод класса Vector
     this.speed = new Vector( 0 - this.speed.x, 0 - this.speed.y );
   }
 
@@ -372,8 +430,10 @@ class Fireball extends Actor
       throw "Некорректные аргументы.";
     }
 
+    // const
     let pos = this.getNextPosition(time);
 
+    // можно не сравнивать c undefined (просто написать if (...))
     if( level.obstacleAt(pos, this.size) == undefined )
     {
       this.pos = pos;
@@ -401,12 +461,16 @@ class VerticalFireball extends Fireball
   }
 }
 
+// FireRain должен наследоваться от Fireball
 class FireRain extends VerticalFireball
 {
   constructor(pos)
   {
     super(pos);
 
+    // лучше не мутировать объект Vector,
+    // это может привести к сложно находимым ошибкам
+    // поле speed должно заполняться через вызов родительского конструктора
     this.speed.y = 3;
     this.startPos = pos;
   }
@@ -421,9 +485,11 @@ class Coin extends Actor
 {
   constructor(pos)
   {
+    // отладочный код
     console.log("==========================");
     console.log(pos);
     console.log("==========================");
+    // const
     let newPos = pos.plus( new Vector(-0.2, -0.1) );
     super(newPos, new Vector(0.6, 0.6));
 
@@ -460,6 +526,7 @@ class Coin extends Actor
   }
 }
 
+// чтобы работал loadLevels нужно запустить игру локально через npm start
 // loadLevels делает загрузку с файла с некорректными заголовками
 // Failed to load https://neto-api.herokuapp.com/js/diplom/levels.json: No 'Access-Control-Allow-Origin' header is present on the requested resource. Origin 'http://js-final.net' is therefore not allowed access.
 
@@ -498,7 +565,7 @@ const actorDict = {
   'v': FireRain,
   '=': HorizontalFireball,
   'o': Coin
-}
+} // точка с запятой
 const parser = new LevelParser(actorDict);
 runGame(schemas, parser, DOMDisplay)
   .then(() => console.log('Вы выиграли приз!'));
