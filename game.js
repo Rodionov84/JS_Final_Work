@@ -21,6 +21,8 @@ class Vector {
 
 class Actor {
   constructor( position = new Vector( 0, 0 ), size = new Vector( 1, 1 ), speed = new Vector( 0, 0 )) {
+    // Много лишних пробелов, посмотрите ещё раз, пожалуйста, правила оформления кода
+    // https://netology-university.bitbucket.io/codestyle/javascript/
     if( ! ( position instanceof Vector ) || ! ( size instanceof Vector ) || ! ( speed instanceof Vector ) ) {
       throw new Error( 'Некорректные аргументы.' );
     }
@@ -38,10 +40,12 @@ class Actor {
   }
 
   get right() {
+    // лишние скобки
     return ( this.pos.x ) + this.size.x;
   }
 
   get bottom() {
+    // лишние скобки
     return ( this.pos.y ) + this.size.y;
   }
 
@@ -62,6 +66,7 @@ class Actor {
       return false;
     }
 
+    // все скобки лишние
     return ( ( this.right > actor.left ) && ( this.left < actor.right ) && 
              ( this.bottom > actor.top ) && ( this.top < actor.bottom )
            );
@@ -71,9 +76,12 @@ class Actor {
 class Level {
   constructor( grid = [], actors = [] ) {
     this.grid = grid.slice();
+    // тут копия тоже не помешала бы
     this.actors = actors;
+    // лишние скобки
     this.player = this.actors.find( ( actor ) => actor.type === 'player' );
     this.height = this.grid.length;
+    // почему не стрелочная функция?
     this.width = this.grid.reduce( function( width, cols ) {
       return width < cols.length ? cols.length : width;
       }, 0);
@@ -91,7 +99,9 @@ class Level {
       throw new Error( 'Некорректные аргументы.' );
     }
 
+    // стрелочная функция
     return this.actors.find(function(currentActor) {
+      // лишняя проверка
       return currentActor != undefined && currentActor.isIntersect( actor );
     });
   }
@@ -108,16 +118,26 @@ class Level {
       return 'lava';
     }
 
+    // всё равно непонятен алгоритм, который реализует код ниже
+    // повторю как должен работать:
+    // определить клетки, на которых находится объект
+    // проверить есть ли в них препятствие
     for ( let cellY = pos.y; cellY <= Math.ceil( pos.y + size.y ); cellY++) {
+      // эта проверка есть выше
       if( cellY > this.height ) {
         continue;
       }
 
       for ( let cellX = pos.x; cellX <= Math.ceil( pos.x + size.x ); cellX++ ) {
+        // эта проверка есть выше
         if( cellX > this.width ) {
           continue;
         }
 
+        // сохрание все округлённые значения в переменных,
+        // чтобы не округлять на каждой итерации цикла.
+        // если значение присваивается переменной 1 раз,
+        // то лучше использовать const
         let gridItem = this.grid[ Math.floor( cellY ) ][ Math.floor( cellX ) ];
         if( gridItem ) {
           return gridItem;
@@ -131,8 +151,11 @@ class Level {
       throw new Error( 'Некорректные аргументы.' );
     }
 
+    // здесь лучше найти индекс объекта в массиве
     this.actors.forEach( ( value, index ) => {
       if( value === actor ) {
+        // нерекомендуется модифицировать массив,
+        // который обходится в данный момент
         this.actors.splice( index, 1 );
       }
     });
@@ -140,6 +163,8 @@ class Level {
 
   noMoreActors( actorType ) {
     return ! (
+      // первая половина проверки лишняя
+      // скобки вокруг аргумента можно опустить
       this.actors.some( ( currentActor ) => currentActor != undefined && currentActor.type === actorType )
     );
   }
@@ -164,7 +189,9 @@ class Level {
 }
 
 class LevelParser {
+  // неправильное значение по-умолчанию
   constructor( dictionary = [] ) {
+    // здесь можно создать копию объекта
     this.dictionary = dictionary;
   }
 
@@ -183,8 +210,10 @@ class LevelParser {
 
   createGrid( grid ) {
     return grid.map( ( row ) => {
+      // почему бы не использовать mep ещё раз?
       let rowGrid = [];
       for(let i = 0; i < row.length; i++) {
+        // добавьте переменных, тчобы код было проще читать
         rowGrid.push( this.obstacleFromSymbol( row[i] ) );
       }
       return rowGrid;
@@ -196,6 +225,7 @@ class LevelParser {
     grid.forEach( ( row, rowI ) => {
       for( let i = 0; i < row.length; i++ ) {
         const actorClass = this.actorFromSymbol( row[i] );
+        // используйте === для сравнения
         if( typeof actorClass == 'function' ) {
           let actor = new actorClass( new Vector( i, rowI ) );
           if( actor instanceof Actor ) {
@@ -284,6 +314,7 @@ class Coin extends Actor {
     this.startPos = newPos;
     this.springSpeed = 8;
     this.springDist = 0.07;
+    // скобки лишние
     this.spring = Math.random() * ( 2 * Math.PI );
   }
 
@@ -309,8 +340,10 @@ class Coin extends Actor {
   }
 }
 
+// const
 let promise = loadLevels();
 promise.then( function( json ) {
+  // const
   let levels = JSON.parse( json );
 
   const actorDict = {
