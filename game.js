@@ -22,6 +22,7 @@ class Vector {
 class Actor {
   constructor(position = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
     if(!(position instanceof Vector) || !(size instanceof Vector) || !(speed instanceof Vector)) {
+      // форматирование
     throw new Error('Некорректные аргументы.');
     }
     this.pos = position;
@@ -108,6 +109,10 @@ class Level {
 		(округление вначале нужно для того, чтобы проверить все клетки которые задевает объект)
 		тем самым я определяю все клетки на которых находится объект и проверяю их на наличие препятствий.
     */
+    // да, всё правильно, в прошлый раз было менее понятно
+    // тут лучше посчитать границы по x и y, сохранить их в переменные
+    // и дальше с ними работать. Так не нужно будет округлять на каждой итерации
+    // и переменные можно использовать в проверках выше.
     for (let cellY = Math.floor(pos.y); cellY < pos.y + size.y; cellY++) {
       for (let cellX = Math.floor(pos.x); cellX < pos.x + size.x; cellX++) {
         const gridItem = this.grid[cellY][cellX];
@@ -123,11 +128,13 @@ class Level {
       throw new Error('Некорректные аргументы.');
     }
 
+    // если объект не будет найтен, то метод отработает некорректно
     const removeIndex = this.actors.indexOf(actor);
     this.actors.splice(removeIndex, 1);
   }
 
   noMoreActors(actorType) {
+    // внешние скобки можно опустить
     return !(this.actors.some(currentActor => currentActor.type === actorType)
     );
   }
@@ -173,8 +180,15 @@ class LevelParser {
     return grid.map(row => {
       // почему бы не использовать mep ещё раз?
       // потому что row это string
+      // строку можно преобразовать в массив, тогда код будет намного короче
+      // с другой стороны, если не преобразоывать, то можно сэкономить
+      // память, так что на ваше усмотрение
+
+      // значение присваивается переменной один раз,
+      // так что лучше использовать const
       let rowGrid = [];
       for(let i = 0; i < row.length; i++) {
+        // gridItem
         const geidItem = this.obstacleFromSymbol(row[i]);
         rowGrid.push(geidItem);
       }
@@ -183,9 +197,12 @@ class LevelParser {
   }
 
   createActors(grid) {
+    // const
     let actors = [];
+    // можно использовать reduce и обойтись без переменной actors
     grid.forEach((row, rowI) => {
       for(let i = 0; i < row.length; i++) {
+        // форматирование
         const actorClass = this.actorFromSymbol( row[i] );
         if(typeof actorClass === 'function') {
           let actor = new actorClass(new Vector( i, rowI));
@@ -199,6 +216,7 @@ class LevelParser {
   }
 
   parse(plan) {
+    // форматирование
     return new Level(this.createGrid(plan), 
                       this.createActors(plan)
                     );
@@ -301,6 +319,8 @@ class Coin extends Actor {
 }
 
 const promise = loadLevels();
+// форматирование
+// тут можно обойтись стрелочными функциями
 promise.then(function(json) {
   const levels = JSON.parse(json);
 
